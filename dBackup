@@ -15,6 +15,21 @@
 
 VERSION="v1.0-dev"
 
+# GLOBAL VARIABLES
+TARKIVER=$(which tar) # Locate tar archiving utility.
+TAR_ARCHIVES= # Empty variable - To be set by createTarArchive function.
+DIRS= # Empty variable - To be set via -d or --directory argument. Target directories that
+      # need to be backed up will be set here.
+MBKP_DIR= # Empty variable - To be set via -D or --backup-directory argument. This will be the
+          # master/destination backup directory which will contain backup directories based
+          # on a date/time format.
+KOMPRESOR= # Empty variable - To be set via -c or --conpression-format. This will help compress
+           # a tar archive.
+KOMPRES_FORMAT= # Empty variable - To be set via -c or --conpression-format. This will help
+                # compress a tar archive.
+DTSTRING="%Y%m%d" # Set a default date/time format. Used to set backup directory name. This can
+                  # be overridden by providing a custom format via --strftime parameter.
+
 # FUNCTIONS
 
 # Function to show help
