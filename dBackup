@@ -135,6 +135,29 @@ function validateAndSetCompressionFormat {
   esac
 }
 
+# This function will create a tar archive of the specified directory or directories and put
+# them in BKP_DIR and add resulting files along with their paths to TAR_ARCHIVES for
+# further compress them to either gzip or bzip2 (if selected)
+function createTarArchive {
+  local TARGET=$(basename $1)
+  local PATH_TO_TARGET=$(dirname $1)
+  local ARCHIVE="$2/$TARGET.tar"
+  printf "Creating TAR archive for $1 --> $ARCHIVE\n" | tee -a $LOG_FILE
+  $TARKIVER -cf $ARCHIVE -C $PATH_TO_TARGET $TARGET >> $LOG_FILE 2>&1
+  local TARKIVER_STATUS=$(echo $?)
+  if [ $TARKIVER_STATUS -eq 0 ] ; then
+    printf "TAR archive $ARCHIVE for $1 created successfully.\n" | tee -a $LOG_FILE
+  else
+    printf "Creation of TAR archive $ARCHIVE failed!\nExiting...\n" | tee -a $LOG_FILE
+    exit 1
+  fi
+  if [[ -z $TAR_ARCHIVES ]] ; then
+    TAR_ARCHIVES="$ARCHIVE"
+  else
+    TAR_ARCHIVES="$TAR_ARCHIVES $ARCHIVE"
+  fi
+}
+
 # PARAMETERS TO BE USED BY THE SCRIPT
 
 SHORT_OPTS="hd:,D:,c:"
