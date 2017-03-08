@@ -41,6 +41,23 @@ function showHelp {
   echo -e "      Example: ./dBackup -d /opt/foo --directory /home/bar -D /backup -c bzip2 --strftime %d_%B_%Y"
 }
 
+# This function validates if a directory exists. If the directory exists,it checks if the DIRS
+# variable is zero or not. If the variable has zero length, then set it to the provided
+# directory. If the variable does not have zero length, add the directory to the variable.
+# If the directory does not exist, then exit the script.
+function validateAndSetTargetDirectory {
+  if [ -d $1 ] ; then
+    if [[ -z $DIRS ]] ; then
+      DIRS="$1"
+    else
+      DIRS="$DIRS $1"
+    fi
+  else
+    printf "Target directory $1 is not a valid directory!\nExiting...\n"
+    exit 1
+  fi
+}
+
 # PARAMETERS TO BE USED BY THE SCRIPT
 
 SHORT_OPTS="hd:,D:,c:"
@@ -68,6 +85,7 @@ while true ; do
       ;;
     -d|--directory) # This parameter is used to set the target directory or directories that
                     # will be included in a backup.
+      validateAndSetTargetDirectory $2
       shift 2
       ;;
     -D|--backup-directory) # This parameter is used to set the master/destination backup
