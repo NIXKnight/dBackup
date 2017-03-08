@@ -107,6 +107,34 @@ function validateAndSetMasterBackupDirectory {
   fi
 }
 
+# This function validates compression format arguments -c or --compression-format and sets
+# along with its binary. If the binary is not found, it will exit the script.
+function validateAndSetCompressionFormat {
+  local FORMAT=$(echo $1 | tr '[:upper:]' '[:lower:]')
+  case $FORMAT in
+    bz2|bzip2)
+      KOMPRES_FORMAT="bz2"
+      KOMPRESOR=$(which pbzip2)
+      if [ -z $KOMPRESOR ] ; then
+        printf "pbzip2 binary not found on this system!\nInstall pbzip2 and then run the script again.\nExiting...\n"
+        exit 1
+      fi
+      ;;
+    gz|gzip)
+      KOMPRES_FORMAT="gz"
+      KOMPRESOR=$(which pigz)
+      if [ -z $KOMPRESOR ] ; then
+        printf "pigz binary not found on this system!\nInstall pigz and then run the script again.\nExiting...\n"
+        exit 1
+      fi
+      ;;
+    *)
+      printf "Supported compression formats are bzip2 (bz2) or gzip (gz)!\nExiting...\n"
+      exit 1
+      ;;
+  esac
+}
+
 # PARAMETERS TO BE USED BY THE SCRIPT
 
 SHORT_OPTS="hd:,D:,c:"
@@ -145,6 +173,7 @@ while true ; do
       ;;
     -c|--compression-format) # This parameter is used to set a compression format to either
                              # gzip or bzip2.
+      validateAndSetCompressionFormat $2
       shift 2
       ;;
     --strftime) # This parameter is used to set a custom date/time format which will be used to
