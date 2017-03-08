@@ -73,6 +73,40 @@ function validateAndSetTargetDirectory {
   fi
 }
 
+# This function validates if the mentioned master backup directory containing backups exists.
+# If the said directory exists then it sets the variable MBKP_DIR. If the directory doesn't
+# exist, the script will ask the user whether to create the directory or not. based on user
+# input, either the directory will be created and the variable will be set or the script
+# will exit.
+function validateAndSetMasterBackupDirectory {
+  if [ -d $1 ] ; then
+    MBKP_DIR=$1
+  else
+    read -p "Specified backup directory $1 doesn't exist. Do you want to create $1 ? [y/n]: " RESPONSE
+    local INPUT=$(echo $RESPONSE | tr '[:upper:]' '[:lower:]')
+    case $INPUT in
+      y|yes)
+        mkdir $1
+        local MKDIR_STATUS=$(echo $?)
+        if [ $MKDIR_STATUS -eq 0 ] ; then
+          printf "Directory $1 created successfully.\n" | tee -a $LOG_FILE
+          MBKP_DIR=$1
+        else
+          printf "Directory $1 could not be created!\nExiting...\n" | tee -a $LOG_FILE
+          exit 1
+        fi
+        ;;
+      n|no)
+        printf "Exiting...\n"
+        exit 0
+        ;;
+      *)
+        printf "Cannot recognize input!\nExiting...\n"
+        exit 1
+    esac
+  fi
+}
+
 # PARAMETERS TO BE USED BY THE SCRIPT
 
 SHORT_OPTS="hd:,D:,c:"
@@ -105,6 +139,7 @@ while true ; do
       ;;
     -D|--backup-directory) # This parameter is used to set the master/destination backup
                            # directory.
+      validateAndSetMasterBackupDirectory $2
       shift 2
       ;;
     -c|--compression-format) # This parameter is used to set a compression format to either
