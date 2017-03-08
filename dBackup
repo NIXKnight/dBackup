@@ -117,6 +117,7 @@ OPTS=$(getopt --shell bash --options $SHORT_OPTS --longoptions $LONG_OPTS -- $@)
 
 if [ $? != 0 ] ; then
   echo -e "Use -h or --help to see options.\nExiting..."
+  exit 1
 elif [[ $NUMARGS -eq 0 ]] ; then
   showHelp
   exit 1
