@@ -11,11 +11,51 @@
 # + LICENSE: MIT License (See LICENSE file)                                                  +
 # +------------------------------------------------------------------------------------------+
 
+# SCRIPT VERSION
+
+VERSION="v1.0-dev"
+
+# FUNCTIONS
+
+# Function to show help
+function showHelp {
+  echo -e "dBackup $VERSION by Saad Ali (https://github.com/NIXKnight)"
+  echo -e "This script is licensed under the terms of MIT License."
+  echo -e "\nUSAGE: dBackup [OPTIONS]"
+  echo -e "\nOPTIONS"
+  echo -e "\n  The script supports the following options, which should be specified on the command line:"
+  echo -e "\n    -h or --help"
+  echo -e "      Print this help."
+  echo -e "\n    -d or --directory [/path/to/target/directory]"
+  echo -e "      Target directory to be included in a backup. Provide this parameter multiple times to backup multiple directories."
+  echo -e "      Example: ./dBackup -d /opt/foo --directory /home/bar"
+  echo -e "\n    -D or --backup-directory [/path/to/destination/directory]"
+  echo -e "      Destination directory where backup is placed in a subdirectory named after the date of the backup."
+  echo -e "      If the destination backup directory doesn't exist, the script will ask you wether to create it or not."
+  echo -e "      Example: ./dBackup -d /opt/foo --directory /home/bar -D /backup"
+  echo -e "\n    -c or --compression-format [gzip|bzip2]"
+  echo -e "      The compression format to use. If this parameter is not provided, compression will not be performed."
+  echo -e "      Example: ./dBackup -d /opt/foo --directory /home/bar -D /backup -c bzip2"
+  echo -e "\n    --strftime [date format]"
+  echo -e "      Change date format of backup directory name. By default the date format is %Y%m%d."
+  echo -e "      Example: ./dBackup -d /opt/foo --directory /home/bar -D /backup -c bzip2 --strftime %d_%B_%Y"
+}
+
 # PARAMETERS TO BE USED BY THE SCRIPT
 
 SHORT_OPTS="hd:,D:,c:"
 LONG_OPTS="help,directory:,backup-directory:,strftime:,compression-format:"
 OPTS=$(getopt --shell bash --options $SHORT_OPTS --longoptions $LONG_OPTS -- $@)
+
+# Show help if no or invalid parameter is provided
+
+if [ $? != 0 ] ; then
+  echo -e "Use -h or --help to see options.\nExiting..."
+elif [[ $NUMARGS -eq 0 ]] ; then
+  showHelp
+  exit 1
+fi
+
 eval set -- "$OPTS"
 
 # PARAMETER PARSING START
@@ -23,6 +63,7 @@ eval set -- "$OPTS"
 while true ; do
   case "$1" in
     -h|--help)
+      showHelp
       exit 0
       ;;
     -d|--directory) # This parameter is used to set the target directory or directories that
@@ -46,6 +87,7 @@ while true ; do
       break
       ;;
     *)
+      showHelp
       exit 1
       ;;
   esac
