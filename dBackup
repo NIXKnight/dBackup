@@ -158,6 +158,17 @@ function createTarArchive {
   fi
 }
 
+# This function checks if the input variable $1 is not empty then for every directory in
+# $1 create a tar archive in $2.
+function backupDirectories {
+  if [ ! -z "$1" ] ; then
+    printf "Executing directory archival routine...\n"  | tee -a $LOG_FILE
+    for DIR in $1 ; do
+      createTarArchive $DIR $2
+    done
+  fi
+}
+
 # This function compresses a file to the selected format.
 function compressFile {
   local FILE="$1.$KOMPRES_FORMAT"
