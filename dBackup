@@ -240,6 +240,7 @@ while true ; do
       ;;
     --strftime) # This parameter is used to set a custom date/time format which will be used to
                 # set backup directory name.
+      DTSTRING="$2"
       shift 2
       ;;
     --)
@@ -252,5 +253,8 @@ while true ; do
       ;;
   esac
 done
+
+# Set a log file
+LOG_FILE="$MBKP_DIR/$(date +$DTSTRING).log"
 
 # PARAMETER PARSING END
