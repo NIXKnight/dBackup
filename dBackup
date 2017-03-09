@@ -56,6 +56,18 @@ function showHelp {
   echo -e "      Example: ./dBackup -d /opt/foo --directory /home/bar -D /backup -c bzip2 --strftime %d_%B_%Y"
 }
 
+# This function creates a directory and verifies its creation.
+function createDirectory {
+  mkdir $1
+  local MKDIR_STATUS=$(echo $?)
+  if [ $MKDIR_STATUS -eq 0 ] ; then
+    printf "Directory $1 created successfully.\n" | tee -a $LOG_FILE
+  else
+    printf "Directory $1 could not be created!\nExiting...\n" | tee -a $LOG_FILE
+    exit 1
+  fi
+}
+
 # This function validates if a directory exists. If the directory exists,it checks if the DIRS
 # variable is zero or not. If the variable has zero length, then set it to the provided
 # directory. If the variable does not have zero length, add the directory to the variable.
@@ -86,15 +98,8 @@ function validateAndSetMasterBackupDirectory {
     local INPUT=$(echo $RESPONSE | tr '[:upper:]' '[:lower:]')
     case $INPUT in
       y|yes)
-        mkdir $1
-        local MKDIR_STATUS=$(echo $?)
-        if [ $MKDIR_STATUS -eq 0 ] ; then
-          echo -e "Directory $1 created successfully.\n" | tee -a $LOG_FILE
-          MBKP_DIR=$1
-        else
-          echo -e "Directory $1 could not be created!\nExiting...\n" | tee -a $LOG_FILE
-          exit 1
-        fi
+        createDirectory $1
+        MBKP_DIR=$1
         ;;
       n|no)
         echo -e "Exiting...\n"
@@ -258,3 +263,29 @@ done
 LOG_FILE="$MBKP_DIR/$(date +$DTSTRING).log"
 
 # PARAMETER PARSING END
+
+# Check if the backup directory eixsts or not. If it doesn't exist, create it. If it already exists,
+# exit the script. The code below also checks for master backup directory.
+if [ -z $MBKP_DIR ] ; then
+  echo -e "Use -h or --help to see options.\nExiting..."
+  exit 1
+else
+  BKP_DIR="$MBKP_DIR/$(date +$DTSTRING)"
+  if [ ! -d $BKP_DIR ] ; then
+    echo -e "Creating backup directory $BKP_DIR\n" | tee -a $LOG_FILE
+    createDirectory $BKP_DIR
+  else
+    echo -e "Backup already exists in $BKP_DIR!\nExiting...\n"  | tee -a $LOG_FILE
+    exit 1
+  fi
+fi
+
+# Call backupDirectories function
+if [ ! -z "$DIRS" ] ; then
+  backupDirectories "$DIRS" $BKP_DIR
+fi
+
+# Call compressBackups function
+if [ ! -z "$TAR_ARCHIVES" ] ; then
+  compressBackups "$TAR_ARCHIVES"
+fi
