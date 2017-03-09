@@ -158,6 +158,34 @@ function createTarArchive {
   fi
 }
 
+# This function compresses a file to the selected format.
+function compressFile {
+  local FILE="$1.$KOMPRES_FORMAT"
+  local BINARY=$(basename $KOMPRESOR)
+  printf "Using $BINARY with max compression $1 --> $FILE\n"  | tee -a $LOG_FILE
+  $KOMPRESOR -9 $1
+  local KOMPRESSION_STATUS=$(echo $?)
+  if [ $KOMPRESSION_STATUS -eq 0 ] ; then
+    printf "$1 --> $FILE compression successful.\n"  | tee -a $LOG_FILE
+  else
+    printf "Error during compression $1 --> $FILE !\nExiting...\n"  | tee -a $LOG_FILE
+    exit 1
+  fi
+}
+
+# This function checks if variable $KOMPRESOR and $KOMPRES_FORMAT are not empty then for
+# every file in $1 compress the file.
+function compressBackups {
+  if [[ ! -z $KOMPRESOR && ! -z $KOMPRES_FORMAT ]] ; then
+    printf "Executing file compression routine...\n"  | tee -a $LOG_FILE
+    for FILE in $1 ; do
+      compressFile $FILE
+    done
+  else
+    printf "Compression format not provided.\nSkipping compression routine...\n"  | tee -a $LOG_FILE
+  fi
+}
+
 # PARAMETERS TO BE USED BY THE SCRIPT
 
 SHORT_OPTS="hd:,D:,c:"
