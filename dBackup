@@ -180,7 +180,7 @@ function createTarArchive {
   $TARKIVER -cf $ARCHIVE -C $PATH_TO_TARGET $TARGET >> $LOG_FILE 2>&1
   local TARKIVER_STATUS=$(echo $?)
   if [ $TARKIVER_STATUS -eq 0 ] ; then
-    echo -e "Tar archive $ARCHIVE for $1 created successfully." | tee -a $LOG_FILE
+    echo -e "Tar archive $ARCHIVE for $1 created successfully.\n" | tee -a $LOG_FILE
   else
     echo -e "Creation of tar archive $ARCHIVE failed!\nExiting..." | tee -a $LOG_FILE
     exit 1
