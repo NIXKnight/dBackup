@@ -27,6 +27,8 @@ KOMPRESOR= # Empty variable - To be set via -c or --conpression-format. This wil
            # a tar archive.
 KOMPRES_FORMAT= # Empty variable - To be set via -c or --conpression-format. This will help
                 # compress a tar archive.
+PKOMPRESSION="0" # Use gzip and bzip2 by default. Can be overridden by --parallel-compression
+                 # parameter to use pigz or pbzip2 instead.
 DTSTRING="%Y%m%d" # Set a default date/time format. Used to set backup directory name. This can
                   # be overridden by providing a custom format via --strftime parameter.
 
@@ -51,6 +53,11 @@ function showHelp {
   echo -e "\n    -c or --compression-format [gzip|bzip2]"
   echo -e "      The compression format to use. If this parameter is not provided, compression will not be performed."
   echo -e "      Example: ./dBackup -d /opt/foo --directory /home/bar -D /backup -c bzip2"
+  echo -e "\n    --parallel-compression"
+  echo -e "      By default, this script uses gzip and bzip2 utilities to compress data which use a single processing core for compression."
+  echo -e "      By providing this parameter the script will use pigz and pbzip2 utilities which use all processing cores for compression."
+  echo -e "      This parameter must be give before -c or --compression format parameter. "
+  echo -e "      Example: ./dBackup -d /opt/foo --directory /home/bar -D /backup --parallel-compression -c bzip2"
   echo -e "\n    --strftime [date format]"
   echo -e "      Change date format of backup directory name. By default the date format is %Y%m%d."
   echo -e "      Example: ./dBackup -d /opt/foo --directory /home/bar -D /backup -c bzip2 --strftime %d_%B_%Y"
@@ -61,10 +68,40 @@ function createDirectory {
   mkdir $1
   local MKDIR_STATUS=$(echo $?)
   if [ $MKDIR_STATUS -eq 0 ] ; then
-    printf "Directory $1 created successfully.\n" | tee -a $LOG_FILE
+    echo -e "Directory $1 created successfully.\n" | tee -a $LOG_FILE
   else
-    printf "Directory $1 could not be created!\nExiting..." | tee -a $LOG_FILE
+    echo -e "Directory $1 could not be created!\nExiting..." | tee -a $LOG_FILE
     exit 1
+  fi
+}
+
+# This script selects compressor binary available in the system based on the value of
+# PKOMPRESSION variable
+function selectCompressorBinary {
+  local BINARY_NAME
+  local KBINARY
+  case $1 in
+    gz|gzip)
+      if [ $PKOMPRESSION -eq 0 ] ; then
+        BINARY_NAME="gzip"
+      elif [ $PKOMPRESSION -eq 1 ] ; then
+        BINARY_NAME="pigz"
+      fi
+      ;;
+    bz2|bzip2)
+      if [ $PKOMPRESSION -eq 0 ] ; then
+        BINARY_NAME="bzip2"
+      elif [ $PKOMPRESSION -eq 1 ] ; then
+        BINARY_NAME="pbzip2"
+      fi
+      ;;
+  esac
+  KBINARY=$(which $BINARY_NAME)
+  if [[ -z $KBINARY ]] ; then
+    echo -e "$BINARY_NAME not found in PATH!\nInstall $BINARY_NAME and then run the script again.\nExiting..."
+    exit 1
+  else
+    echo $KBINARY
   fi
 }
 
@@ -119,19 +156,11 @@ function validateAndSetCompressionFormat {
   case $FORMAT in
     bz2|bzip2)
       KOMPRES_FORMAT="bz2"
-      KOMPRESOR=$(which pbzip2)
-      if [ -z $KOMPRESOR ] ; then
-        echo -e "pbzip2 binary not found on this system!\nInstall pbzip2 and then run the script again.\nExiting..."
-        exit 1
-      fi
+      KOMPRESOR=$(selectCompressorBinary $FORMAT)
       ;;
     gz|gzip)
       KOMPRES_FORMAT="gz"
-      KOMPRESOR=$(which pigz)
-      if [ -z $KOMPRESOR ] ; then
-        echo -e "pigz binary not found on this system!\nInstall pigz and then run the script again.\nExiting..."
-        exit 1
-      fi
+      KOMPRESOR=$(selectCompressorBinary $FORMAT)
       ;;
     *)
       echo -e "Supported compression formats are bzip2 (bz2) or gzip (gz)!\nExiting..."
@@ -178,7 +207,7 @@ function backupDirectories {
 function compressFile {
   local FILE="$1.$KOMPRES_FORMAT"
   local BINARY=$(basename $KOMPRESOR)
-  echo -e "Using $BINARY with max compression $1 --> $FILE\n"  | tee -a $LOG_FILE
+  echo -e "Using $BINARY with max compression $1 --> $FILE"  | tee -a $LOG_FILE
   $KOMPRESOR -9 $1
   local KOMPRESSION_STATUS=$(echo $?)
   if [ $KOMPRESSION_STATUS -eq 0 ] ; then
@@ -205,7 +234,7 @@ function compressBackups {
 # PARAMETERS TO BE USED BY THE SCRIPT
 
 SHORT_OPTS="hd:,D:,c:"
-LONG_OPTS="help,directory:,backup-directory:,strftime:,compression-format:"
+LONG_OPTS="help,directory:,backup-directory:,strftime:,compression-format:,parallel-compression"
 OPTS=$(getopt --shell bash --options $SHORT_OPTS --longoptions $LONG_OPTS -- $@)
 
 # Show help if no or invalid parameter is provided
@@ -244,6 +273,10 @@ while true ; do
                              # gzip or bzip2.
       validateAndSetCompressionFormat $2
       shift 2
+      ;;
+    --parallel-compression)
+      PKOMPRESSION="1"
+      shift 1
       ;;
     --strftime) # This parameter is used to set a custom date/time format which will be used to
                 # set backup directory name.
