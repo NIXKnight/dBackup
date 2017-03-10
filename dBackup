@@ -56,7 +56,7 @@ function showHelp {
   echo -e "\n    --parallel-compression"
   echo -e "      By default, this script uses gzip and bzip2 utilities to compress data which use a single processing core for compression."
   echo -e "      By providing this parameter the script will use pigz and pbzip2 utilities which use all processing cores for compression."
-  echo -e "      This parameter must be give before -c or --compression format parameter. "
+  echo -e "      Note: This parameter must be give before -c or --compression format parameter. "
   echo -e "      Example: ./dBackup -d /opt/foo --directory /home/bar -D /backup --parallel-compression -c bzip2"
   echo -e "\n    --strftime [date format]"
   echo -e "      Change date format of backup directory name. By default the date format is %Y%m%d."
