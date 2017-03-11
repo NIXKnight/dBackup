@@ -13,7 +13,7 @@
 
 # SCRIPT VERSION
 
-VERSION="v1.0-dev"
+VERSION="v1.0"
 
 # GLOBAL VARIABLES
 TARKIVER=$(which tar) # Locate tar archiving utility.
